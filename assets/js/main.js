@@ -21,6 +21,8 @@ if(cartClose){
 // 2. Add to Cart Logic
 let watchCart = JSON.parse(localStorage.getItem('vm_watch_cart')) || [];
 
+/*==================== VENTUREMOND UPDATED LOGIC ====================*/
+
 function addToCart(name, price, img) {
     const item = {
         name: name,
@@ -29,7 +31,7 @@ function addToCart(name, price, img) {
         quantity: 1
     };
 
-    // Check if already in cart
+    // 1. Check if already in cart
     const existingItem = watchCart.find(i => i.name === name);
     if(existingItem) {
         existingItem.quantity += 1;
@@ -37,8 +39,19 @@ function addToCart(name, price, img) {
         watchCart.push(item);
     }
 
+    // 2. Save to Storage
     localStorage.setItem('vm_watch_cart', JSON.stringify(watchCart));
-    alert(`${name} added to cart mawa!`);
+
+    // 3. Updated Alert Message (Nuvvu korukunnattu)
+    alert("Successfully added to cart!");
+
+    // 4. Automatic Cart Close logic
+    // Bedimcode template lo cart class "show-cart" tho untundi
+    const cartMenu = document.getElementById('cart');
+    if(cartMenu) {
+        cartMenu.classList.remove('show-cart'); 
+    }
+
     displayCart();
 }
 
