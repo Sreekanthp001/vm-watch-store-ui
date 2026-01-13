@@ -1,148 +1,118 @@
-/*=============== SHOW & CLOSE MENU ===============*/
-const navMenu = document.getElementById('nav-menu'),
-      navToggle = document.getElementById('nav-toggle'),
-      navClose = document.getElementById('nav-close')
+/*==================== VENTUREMOND CART LOGIC ====================*/
 
-/* Show menu */
-if(navToggle){
-   navToggle.addEventListener('click', () =>{
-      navMenu.classList.add('show-menu')
-   })
-}
-
-/* Hide menu */
-if(navClose){
-   navClose.addEventListener('click', () =>{
-      navMenu.classList.remove('show-menu')
-   })
-}
-
-/*=============== REMOVE MOBILE MENU ===============*/
-const navLink = document.querySelectorAll('.nav__link')
-
-const linkAction = () =>{
-   const navMenu = document.getElementById('nav-menu')
-   // When we click on each nav__link, we remove the show-menu class
-   navMenu.classList.remove('show-menu')
-}
-navLink.forEach(n => n.addEventListener('click', linkAction))
-
-/*=============== CHANGE HEADER STYLES ===============*/
-const scrollHeader = () =>{
-   const header = document.getElementById('header')
-   // Add the .scroll-header class if the bottom scroll of the viewport is greater than 50
-   this.scrollY >= 50 ? header.classList.add('scroll-header') 
-                      : header.classList.remove('scroll-header')
-}
-window.addEventListener('scroll', scrollHeader)
-
-/*=============== TESTIMONIAL SWIPER ===============*/
-let testimonialSwiper = new Swiper(".testimonial-swiper", {
-    spaceBetween: 30,
-    loop: 'true',
-
-    navigation: {
-        nextEl: ".swiper-button-next",
-        prevEl: ".swiper-button-prev",
-    },
-});
-
-/*=============== NEW SWIPER ===============*/
-let newSwiper = new Swiper(".new-swiper", {
-    spaceBetween: 24,
-    loop: 'true',
-
-    breakpoints: {
-        576: {
-          slidesPerView: 2,
-        },
-        768: {
-          slidesPerView: 3,
-        },
-        1024: {
-          slidesPerView: 4,
-        },
-    },
-});
-
-/*=============== SHOW SCROLL UP ===============*/ 
-const scrollUp = () =>{
-	const scrollUp = document.getElementById('scroll-up')
-   // Add the .scroll-header class if the bottom scroll of the viewport is greater than 350
-	this.scrollY >= 350 ? scrollUp.classList.add('show-scroll')
-						     : scrollUp.classList.remove('show-scroll')
-}
-window.addEventListener('scroll', scrollUp)
-
-/*=============== SCROLL SECTIONS ACTIVE LINK ===============*/
-const sections = document.querySelectorAll('section[id]')
-
-// Link the ID of each section (section id="home") to each link (a href="#home") 
-// and activate the link with the class .active-link
-const scrollActive = () => {
-   // We get the position by scrolling down
-   const scrollY = window.scrollY
-
-   sections.forEach(section => {
-      const id = section.id, // id of each section
-            top = section.offsetTop - 50, // Distance from the top edge
-            height = section.offsetHeight, // Element height
-            link = document.querySelector('.nav__menu a[href*=' + id + ']') // id nav link
-
-      if(!link) return
-
-      link.classList.toggle('active-link', scrollY > top && scrollY <= top + height)
-   })
-}
-window.addEventListener('scroll', scrollActive)
-
-/*=============== SHOW CART ===============*/
+// 1. Open/Close Cart (Already existing but making it robust)
 const cart = document.getElementById('cart'),
       cartShop = document.getElementById('cart-shop'),
       cartClose = document.getElementById('cart-close')
 
-/*===== CART SHOW =====*/
-/* Validate if constant exists */
 if(cartShop){
     cartShop.addEventListener('click', () =>{
         cart.classList.add('show-cart')
+        displayCart() // Refresh cart when opening
     })
 }
 
-/*===== CART HIDDEN =====*/
-/* Validate if constant exists */
 if(cartClose){
     cartClose.addEventListener('click', () =>{
         cart.classList.remove('show-cart')
     })
 }
 
-/*=============== DARK LIGHT THEME ===============*/ 
-const themeButton = document.getElementById('theme-button')
-const darkTheme = 'dark-theme'
-const iconTheme = 'bx-sun'
+// 2. Add to Cart Logic
+let watchCart = JSON.parse(localStorage.getItem('vm_watch_cart')) || [];
 
-// Previously selected topic (if user selected)
-const selectedTheme = localStorage.getItem('selected-theme')
-const selectedIcon = localStorage.getItem('selected-icon')
+function addToCart(name, price, img) {
+    const item = {
+        name: name,
+        price: parseFloat(price.replace('$', '')),
+        img: img,
+        quantity: 1
+    };
 
-// We obtain the current theme that the interface has by validating the dark-theme class
-const getCurrentTheme = () => document.body.classList.contains(darkTheme) ? 'dark' : 'light'
-const getCurrentIcon = () => themeButton.classList.contains(iconTheme) ? 'bx bx-moon' : 'bx bx-sun'
+    // Check if already in cart
+    const existingItem = watchCart.find(i => i.name === name);
+    if(existingItem) {
+        existingItem.quantity += 1;
+    } else {
+        watchCart.push(item);
+    }
 
-// We validate if the user previously chose a topic
-if (selectedTheme) {
-  // If the validation is fulfilled, we ask what the issue was to know if we activated or deactivated the dark
-  document.body.classList[selectedTheme === 'dark' ? 'add' : 'remove'](darkTheme)
-  themeButton.classList[selectedIcon === 'bx bx-moon' ? 'add' : 'remove'](iconTheme)
+    localStorage.setItem('vm_watch_cart', JSON.stringify(watchCart));
+    alert(`${name} added to cart mawa!`);
+    displayCart();
 }
 
-// Activate / deactivate the theme manually with the button
-themeButton.addEventListener('click', () => {
-    // Add or remove the dark / icon theme
-    document.body.classList.toggle(darkTheme)
-    themeButton.classList.toggle(iconTheme)
-    // We save the theme and the current icon that the user chose
-    localStorage.setItem('selected-theme', getCurrentTheme())
-    localStorage.setItem('selected-icon', getCurrentIcon())
-})
+// 3. Display Cart Items
+function displayCart() {
+    const cartContainer = document.querySelector('.cart__container');
+    const itemsCountLabel = document.querySelector('.cart__prices-item');
+    const totalPriceLabel = document.querySelector('.cart__prices-total');
+    
+    cartContainer.innerHTML = '';
+    let total = 0;
+    let count = 0;
+
+    watchCart.forEach((item, index) => {
+        total += item.price * item.quantity;
+        count += item.quantity;
+
+        cartContainer.innerHTML += `
+            <article class="cart__card">
+                <div class="cart__box">
+                    <img src="${item.img}" alt="" class="cart__img">
+                </div>
+                <div class="cart__details">
+                    <h3 class="cart__title">${item.name}</h3>
+                    <span class="cart__price">$${item.price}</span>
+                    <div class="cart__amount">
+                        <div class="cart__amount-content">
+                            <span class="cart__amount-box" onclick="updateQty(${index}, -1)">
+                                <i class='bx bx-minus'></i>
+                            </span>
+                            <span class="cart__amount-number">${item.quantity}</span>
+                            <span class="cart__amount-box" onclick="updateQty(${index}, 1)">
+                                <i class='bx bx-plus'></i>
+                            </span>
+                        </div>
+                        <i class='bx bx-trash-alt cart__amount-trash' onclick="removeItem(${index})"></i>
+                    </div>
+                </div>
+            </article>
+        `;
+    });
+
+    itemsCountLabel.textContent = `${count} items`;
+    totalPriceLabel.textContent = `$${total}`;
+}
+
+// 4. Update Quantity & Remove
+window.updateQty = (index, change) => {
+    watchCart[index].quantity += change;
+    if(watchCart[index].quantity <= 0) {
+        watchCart.splice(index, 1);
+    }
+    localStorage.setItem('vm_watch_cart', JSON.stringify(watchCart));
+    displayCart();
+}
+
+window.removeItem = (index) => {
+    watchCart.splice(index, 1);
+    localStorage.setItem('vm_watch_cart', JSON.stringify(watchCart));
+    displayCart();
+}
+
+// 5. Link Buttons in HTML
+// Ikkada manam HTML lo unna buttons ki event listeners add chestunnam
+document.addEventListener('click', (e) => {
+    if(e.target.classList.contains('button') && e.target.innerText === 'ADD TO CART' || e.target.closest('.products__button')) {
+        const card = e.target.closest('article');
+        const name = card.querySelector('h3').innerText;
+        const price = card.querySelector('span[class*="price"]').innerText;
+        const img = card.querySelector('img').src;
+        
+        addToCart(name, price, img);
+    }
+});
+
+// Initial Load
+displayCart();
